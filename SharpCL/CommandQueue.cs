@@ -416,6 +416,75 @@ namespace SharpCL
         }
 
         /// <summary>
+        /// Enqueues a command to fill a <see cref="Buffer"/> object with a pattern.
+        /// </summary>
+        /// <typeparam name="DataType">The type of buffer data.</typeparam>
+        /// <param name="buffer">The buffer to fill.</param>
+        /// <param name="pattern">Pattern used to fill the buffer. Pattern size in bytes must be 1, 2, 4, 8, 16, 32, 64 or 128.</param>
+        /// <param name="offset">Is the location of the region being filled in buffer and must be a multiple of pattern size.</param>
+        /// <param name="size">Is the size of region being filled in buffer and must be a multiple of pattern size.</param>
+        /// <param name="eventsWaitList">A list of events that need to complete before this particular command can be executed.</param>
+        /// <returns>An event object that identifies this particular fill command and can be used to query or queue a wait for this particular command to complete.</returns>
+        public Event EnqueueFillBuffer<DataType>(Buffer buffer, DataType[] pattern, UInt64 size = 0, UInt64 offset = 0, List<Event> eventsWaitList = null)
+        {
+            IntPtr[] eventHandles = EventListToHandles(eventsWaitList, out UInt32 eventsCount);
+            UInt64 sizeOfType = (UInt64)Marshal.SizeOf<DataType>();
+            if (size == 0) size = buffer.Length - (buffer.Length % (UInt64)pattern.Length);
+            GCHandle gcHandle = GCHandle.Alloc(pattern, GCHandleType.Pinned);
+            error = clEnqueueFillBuffer(Handle, buffer.Handle, gcHandle.AddrOfPinnedObject(), new UIntPtr((UInt64)pattern.Length * sizeOfType), new UIntPtr(offset * sizeOfType), new UIntPtr(size * sizeOfType), eventsCount, eventHandles, out IntPtr newEvent);
+            gcHandle.Free();
+            if (error != ErrorCode.Success)
+                return null;
+
+            return new Event(newEvent, this);
+        }
+
+        /// <summary>
+        /// Enqueues a command to fill an image object with a specified color.
+        /// </summary>
+        /// <typeparam name="DataType">The type of image data.</typeparam>
+        /// <param name="image">The image to fill.</param>
+        /// <param name="color">
+        /// The fill color must be a ColorFloat struct if the image channel data type is not an unnormalized signed and unsigned integer type, a ColorInt struct if the
+        /// image channel data type is an unnormalized signed integer type and a ColorUInt struct if the image channel data type is an unnormalized unsigned integer type.
+        /// </param>
+        /// <param name="region">
+        /// Structure that defines the (Width, Height, Depth) in pixels of the 1D, 2D or 3D rectangle, the (Width, Height) in pixels of the 2D rectangle and the number of images of a 2D image array
+        /// or the (Width) in pixels of the 1D rectangle and the number of images of a 1D image array. If image is a 2D image object, Depth must be 1. If image is a 1D image or
+        /// 1D image buffer object, Height and Depth must be 1. If image is a 1D image array object, Depth must be 1. The values in region cannot be 0. Default = all image.
+        /// </param>
+        /// <param name="origin">
+        /// Defines the (X, Y, Z) offset in pixels in the 1D, 2D or 3D image, the (X, Y) offset and the image index in the 2D image array or the (X) offset and the image index in the 1D image array.
+        /// If image is a 2D image object, Z must be 0. If image is a 1D image or 1D image buffer object, Y and Z must be 0.  If image is a 1D image array object, Z must be 0.
+        /// If image is a 1D image array object, Y describes the image index in the 1D image array. If image is a 2D image array object, Z describes the image index in the 2D image array. Default = (0,0,0).
+        /// </param>
+        /// <param name="eventsWaitList">A list of events that need to complete before this particular command can be executed.</param>
+        /// <returns>An event object that identifies this particular fill command and can be used to query or queue a wait for this particular command to complete.</returns>
+        public Event EnqueueFillImage<ColorType>(Image image, ColorType color, Size region = default, Offset origin = default, List<Event> eventsWaitList = null)
+        {
+            IntPtr[] eventHandles = EventListToHandles(eventsWaitList, out UInt32 eventsCount);
+
+            if (region.IsNull)
+            {
+                region = image.Size;
+                if (image.MemoryObjectType == MemoryObjectType.Image1DArray)
+                    region.Height = image.ArraySize;
+                else if (image.MemoryObjectType == MemoryObjectType.Image2DArray)
+                    region.Depth = image.ArraySize;
+            }
+            UIntPtr[] regionArray = new UIntPtr[3] { new UIntPtr(region.Width), new UIntPtr(region.Height), new UIntPtr(region.Depth) };
+            UIntPtr[] originArray = new UIntPtr[3] { new UIntPtr(origin.X), new UIntPtr(origin.Y), new UIntPtr(origin.Z) };
+
+            GCHandle gcHandle = GCHandle.Alloc(color, GCHandleType.Pinned);
+            error = clEnqueueFillImage(Handle, image.Handle, gcHandle.AddrOfPinnedObject(), originArray, regionArray, eventsCount, eventHandles, out IntPtr newEvent);
+            gcHandle.Free();
+            if (error != ErrorCode.Success)
+                return null;
+
+            return new Event(newEvent, this);
+        }
+
+        /// <summary>
         /// Enqueues a marker command which waits for either a list of events to complete, or if the list is empty it waits for all commands previously enqueued in command queue to complete before it completes.
         /// </summary>
         /// <param name="eventsWaitList">A list of events that need to complete before this particular command can be executed.</param>
@@ -626,6 +695,29 @@ namespace SharpCL
             IntPtr dst_image,
             UIntPtr src_offset,
             [MarshalAs(UnmanagedType.LPArray, SizeConst = 3)] UIntPtr[] dst_origin,
+            [MarshalAs(UnmanagedType.LPArray, SizeConst = 3)] UIntPtr[] region,
+            UInt32 num_events_in_wait_list,
+            [MarshalAs(UnmanagedType.LPArray)] IntPtr[] event_wait_list,
+            out IntPtr out_event);
+
+        [DllImport("OpenCL.dll", ExactSpelling = true)]
+        private extern static ErrorCode clEnqueueFillBuffer(
+            IntPtr command_queue,
+            IntPtr buffer,
+            IntPtr pattern,
+            UIntPtr pattern_size,
+            UIntPtr offset,
+            UIntPtr size,
+            UInt32 num_events_in_wait_list,
+            [MarshalAs(UnmanagedType.LPArray)] IntPtr[] event_wait_list,
+            out IntPtr out_event);
+
+        [DllImport("OpenCL.dll", ExactSpelling = true)]
+        private extern static ErrorCode clEnqueueFillImage(
+            IntPtr command_queue,
+            IntPtr image,
+            IntPtr fill_color,
+            [MarshalAs(UnmanagedType.LPArray, SizeConst = 3)] UIntPtr[] origin,
             [MarshalAs(UnmanagedType.LPArray, SizeConst = 3)] UIntPtr[] region,
             UInt32 num_events_in_wait_list,
             [MarshalAs(UnmanagedType.LPArray)] IntPtr[] event_wait_list,

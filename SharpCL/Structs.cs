@@ -42,6 +42,11 @@ namespace SharpCL
             }
         }
 
+        public Size(UInt64 width, UInt64 height, UInt64 depth)
+        {
+            Width = width; Height = height; Depth = depth;
+        }
+
         public bool IsNull
         {
             get
@@ -69,6 +74,49 @@ namespace SharpCL
                 };
             }
         }
+
+        public Offset(UInt64 x, UInt64 y, UInt64 z)
+        {
+            X = x; Y = y; Z = z;
+        }
     }
 
+    public struct ColorFloat
+    {
+        public float R;
+        public float G;
+        public float B;
+        public float A;
+
+        public ColorFloat(float r, float g, float b, float a = 1.0f)
+        {
+            R = r; G = g; B = b; A = a;
+        }
+    }
+
+    public struct ColorInt
+    {
+        public Int32 R;
+        public Int32 G;
+        public Int32 B;
+        public Int32 A;
+
+        public ColorInt(Int32 r, Int32 g, Int32 b, Int32 a)
+        {
+            R = r; G = g; B = b; A = a;
+        }
+    }
+
+    public struct ColorUInt
+    {
+        public UInt32 R;
+        public UInt32 G;
+        public UInt32 B;
+        public UInt32 A;
+
+        public ColorUInt(UInt32 r, UInt32 g, UInt32 b, UInt32 a)
+        {
+            R = r; G = g; B = b; A = a;
+        }
+    }
 }
