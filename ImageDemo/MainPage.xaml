@@ -1,0 +1,30 @@
+﻿<Page
+    x:Class="ImageDemo.MainPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:ImageDemo"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" Loaded="Page_Loaded">
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="100px"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <Rectangle HorizontalAlignment="Stretch" Grid.Column="0" Fill="#808080" />
+        <Image x:Name="SourceImage" Grid.Column="0" />
+
+        <Button Content="Open..." Grid.Column="1" HorizontalAlignment="Center" Width="80" Height="36" VerticalAlignment="Top" Margin="0,10,0,0" Click="Open_Click" />
+        <Button x:Name="BlurButton" Content="Blur" Grid.Column="1" HorizontalAlignment="Center" Width="80" Height="36" VerticalAlignment="Center" Margin="0,-120,0,0" IsEnabled="False" Click="Blur_Click" />
+        <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE111;" Grid.Column="1" FontSize="52" FontWeight="Bold" Height="60" />
+        <Button x:Name="InvertButton" Content="Invert" Grid.Column="1" HorizontalAlignment="Center" Width="80" Height="36" VerticalAlignment="Center" Margin="0,120,0,0" IsEnabled="False" Click="Invert_Click" />
+
+        <Rectangle HorizontalAlignment="Stretch" Grid.Column="2" Fill="#808080" />
+        <Image x:Name="DestinationImage" Grid.Column="2" />
+    </Grid>
+
+</Page>
