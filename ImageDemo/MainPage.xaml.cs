@@ -41,7 +41,7 @@ namespace ImageDemo
                 const sampler_t sampler = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_CLAMP_TO_EDGE | CLK_FILTER_NEAREST;
 
                 // Blur using colors in a 7x7 square
-                uint4 color = (uint4)(0, 0, 0, 255);
+                uint4 color = (uint4)(0, 0, 0, 0);
                 for(int u=-3; u<=3; u++) {
                     for(int v=-3; v<=3; v++) {
                         color += read_imageui(source, sampler, coord + (int2)(u, v));
@@ -183,6 +183,7 @@ namespace ImageDemo
                 return;
             }
 
+            // Read destination image data
             byte[] destinationData = new byte[sourceBitmap.PixelWidth * sourceBitmap.PixelHeight * 4];
             commandQueue.EnqueueReadImage(destinationImage, destinationData, default, default, true, new List<Event> { kernelEvent });
             if (commandQueue.Error)
@@ -197,6 +198,7 @@ namespace ImageDemo
                 return;
             }
 
+            // Use data to create a bitmap source for DestinationImage
             WriteableBitmap writeableBitmap = new WriteableBitmap(sourceBitmap.PixelWidth, sourceBitmap.PixelHeight);
             using (Stream stream = writeableBitmap.PixelBuffer.AsStream())
             {
